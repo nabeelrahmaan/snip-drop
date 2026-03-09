@@ -41,11 +41,15 @@ func (a *AuthHandler) Login (c *gin.Context) {
 		c.JSON(401, gin.H{"error": err.Error()})
 		return
 	}
+	c.SetCookie(
+		"refresh_token",
+		refresh,
+		7 * 24 * 3600,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
 
-	res := dto.AuthResponse{
-		AccessToken: access,
-		RefreshToken: refresh,
-	}
-
-	c.JSON(200, res)
+	c.JSON(200, gin.H{"access_token": access})
 }

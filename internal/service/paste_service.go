@@ -5,6 +5,7 @@ import (
 	"codeDrop/internal/repository"
 	"codeDrop/internal/storage"
 	"codeDrop/internal/utils"
+	"errors"
 	"fmt"
 	"time"
 
@@ -50,4 +51,45 @@ func (s *PasteService) Create(userID uuid.UUID, content string, visibility strin
 	}
 
 	return paste, nil
+}
+
+func (s *PasteService) FindById(id string) (string, error) {
+
+	paste, err := s.Repo.FindById(id)
+	if err != nil {
+		return "", err
+	}
+
+	if paste.ExpiresAt != nil && time.Now().After(*paste.ExpiresAt) {
+		return "", errors.New("paste expired")
+	}
+	content, err := s.Storage.Read(paste.ObjectKey)
+	if err != nil {
+		return "", err
+	}
+
+	return content, nil
+}
+
+func (s *PasteService) FindByUser(user_id uuid.UUID) ([]models.Paste, error) {
+	return s.Repo.FindByUser(user_id)
+}
+
+
+func (s *PasteService) DeletePaste(id string, user_id uuid.UUID) error {
+	paste, err := s.Repo.FindById(id)
+	if err != nil {
+		return err
+	}
+
+	if paste.UserId != user_id {
+		return errors.New("unauthorized")
+	}
+
+	err = s.Storage.Delete(paste.ObjectKey)
+	if err != nil {
+		return err
+	}
+
+	return s.Repo.Delete(id, user_id)
 }
