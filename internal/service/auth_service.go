@@ -6,6 +6,8 @@ import (
 	"codeDrop/internal/utils"
 	"errors"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type AuthService struct {
@@ -24,7 +26,7 @@ func (r *AuthService) Signup(name, email, password string) error {
 	}
 
 	user := models.User{
-		Username: name,
+		Name: name,
 		Email: email,
 		Password: hash,
 		CreatedAt: time.Now(),
@@ -67,4 +69,30 @@ func (r *AuthService) Login(email, pass string) (string, string, error) {
 	}
 
 	return access, refresh, nil
+}
+
+func(r *AuthService) RefreshToken(refToken string) (string, error) {
+
+	token, err := jwt.Parse(refToken, func(t *jwt.Token)(any, error){
+		return utils.RefreshSecret, nil
+	})
+	if err != nil || token.Valid {
+		return "", errors.New("invalid refresh token")
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+
+	userID := claims["user_id"].(string)
+
+	user, err := r.Repo.FindById(userID)
+	if err != nil {
+		return "", errors.New("user not found")
+	}
+
+	access, err := utils.GenerateAccess(user)
+	if err != nil {
+		return "", err
+	}
+
+	return access, err
 }

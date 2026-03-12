@@ -26,6 +26,14 @@ func (r *UserRepository) FindByEmail(email string) (*models.User, error) {
 	return user, err
 }
 
+func (r *UserRepository) FindById(id string) (*models.User, error) {
+	var user *models.User
+
+	err := r.DB.Where("id=?", id).First(&user).Error
+
+	return user, err
+}
+
 func (r *UserRepository) CreateRefresh(refresh *models.RefreshToken) error {
 	return r.DB.Create(refresh).Error
 }

@@ -53,3 +53,16 @@ func (a *AuthHandler) Login (c *gin.Context) {
 
 	c.JSON(200, gin.H{"access_token": access})
 }
+
+func(h *AuthHandler) RefreshToken(c *gin.Context) {
+	var req struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	
+}
